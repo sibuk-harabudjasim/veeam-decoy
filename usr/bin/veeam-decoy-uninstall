@@ -1,0 +1,83 @@
+#!/bin/bash
+
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        echo "This script must be run as root"
+        exit 1
+    fi
+}
+
+clean_systemd() {
+    for service in $(find /etc/systemd/system/ -name '*-honeypot.service'); do
+        echo "Stopping $(basename $service)"
+        systemctl stop $(basename $service)
+        systemctl disable $(basename $service) | true
+        rm $service
+    done
+    systemctl daemon-reload
+}
+
+remove_tui() {
+    if [[ -e /etc/profile ]]; then
+        echo "Removing /etc/profile"
+        rm /etc/profile
+    else
+        echo "No /etc/profile found. Ignoring"
+    fi
+    if [[ -e /usr/local/bin/start_hnp_tui.sh ]]; then
+        echo "Removing /usr/local/bin/start_hnp_tui.sh"
+        rm /usr/local/bin/start_hnp_tui.sh
+    else
+       echo "No /usr/local/bin/start_hnp_tui.sh found. Ignoring"
+    fi
+}
+
+clean_sshd() {
+    if [[ -e /etc/ssh/sshd_config.backup ]]; then
+        echo "Restoring /etc/ssh/sshd_config"
+        mv /etc/ssh/sshd_config.backup /etc/ssh/sshd_config
+        systemctl restart sshd
+    else
+        echo "No sshd_config.backup found. Ignoring"
+    fi
+}
+
+clean_rsyslog() {
+    if [[ -e /etc/rsyslog.d/10-vbr.conf ]]; then
+        echo "Removing /etc/rsyslog.d/10-vbr.conf"
+        rm /etc/rsyslog.d/10-vbr.conf
+        systemctl restart rsyslog
+    else
+        echo "No rsyslog configuration found. Ignoring"
+    fi
+}
+
+remove_files() {
+    if [[ -e /opt/honeypot ]]; then
+        echo "Removing /opt/honeypot"
+        rm -rf /opt/honeypot
+    else
+        echo "No /opt/honeypot found. Ignoring"
+    fi
+}
+
+remove_configs() {
+    if [[ "$1" == "-purge" ]]; then
+        echo "Purging configs"
+        rm -rf /etc/hnp
+    fi
+}
+
+main() {
+    check_root
+    clean_systemd
+    remove_tui
+    clean_sshd
+    clean_rsyslog
+    remove_files
+    remove_configs $1
+    echo "Uninstall completed successfully"
+    rm /usr/bin/veeam-decoy-uninstall
+}
+
+main $1

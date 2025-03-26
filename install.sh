@@ -107,6 +107,7 @@ copy_files() {
     fi
     cp /tmp/decoys/etc/systemd/system/* /etc/systemd/system/
     cp /tmp/decoys/usr/local/bin/start_hnp_tui.sh /usr/local/bin/
+    cp /tmp/decoys/usr/bin/veeam-decoy-uninstall /usr/bin/
 }
 
 set_permissions() {
@@ -121,7 +122,8 @@ set_permissions() {
         /opt/honeypot/vbr_honeypot.py \
         /opt/honeypot/vhr_honeypot.py \
         /opt/honeypot/vwr_honeypot.py \
-        /usr/local/bin/start_hnp_tui.sh
+        /usr/local/bin/start_hnp_tui.sh \
+        /usr/bin/veeam-decoy-uninstall
 }
 
 start_services() {
