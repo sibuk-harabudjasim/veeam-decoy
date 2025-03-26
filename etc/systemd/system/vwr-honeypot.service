@@ -3,8 +3,8 @@ Description=Veeam Windows Repository Honeypot
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/VWR/vwr_honeypot.py
-WorkingDirectory=/opt/VBR
+ExecStart=/usr/bin/python3 /opt/honeypot/vwr_honeypot.py
+WorkingDirectory=/opt/honeypot
 Restart=on-failure
 User=root
 

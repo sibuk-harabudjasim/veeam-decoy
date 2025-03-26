@@ -3,8 +3,8 @@ Description=RDP Honeypot
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/RDP/rdp_honeypot.py
-WorkingDirectory=/opt/RDP
+ExecStart=/usr/bin/python3 /opt/honeypot/rdp_honeypot.py
+WorkingDirectory=/opt/honeypot
 Restart=on-failure
 User=root
 

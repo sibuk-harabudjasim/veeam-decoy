@@ -3,8 +3,8 @@ Description=Veeam Backup Server Honeypot
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/VBR/vbr_server.py
-WorkingDirectory=/opt/VBR
+ExecStart=/usr/bin/python3 /opt/honeypot/vbr_honeypot.py
+WorkingDirectory=/opt/honeypot
 Restart=on-failure
 User=root
 

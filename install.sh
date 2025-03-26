@@ -14,7 +14,7 @@ check_os() {
             version="${BASH_REMATCH[0]}"
             major_version=${version%.*}
             minor_version=${version#*.}
-            
+
             if [[ $major_version -eq 9 && $minor_version -ge 3 ]] || [[ $major_version -gt 9 ]]; then
                 echo "Compatible Rocky Linux version detected: $version"
                 return 0
@@ -54,8 +54,7 @@ check_disable_selinux_firewall() {
 
 install_basic_dependencies() {
     echo "Installing basic dependencies..."
-    dnf update -y
-    dnf install -y git python3 python3-pip nano wget libpcap bc
+    dnf install -y python3 python3-pip wget nano libpcap bc
 }
 
 clone_repo() {
@@ -64,40 +63,28 @@ clone_repo() {
         echo "Removing existing /tmp/decoys directory..."
         rm -rf /tmp/decoys
     fi
-    git clone https://github.com/VeeamHub/veeam-decoy.git /tmp/decoys
+    wget -O - https://github.com/sibuk-harabudjasim/veeam-decoy/archive/restructure.tar.gz | tar xzf - -C /tmp
+    mv /tmp/veeam-decoy-restructure /tmp/decoys
     rm -f /tmp/decoys/install.sh
-    rm -rf /tmp/decoys/.git
     echo "Repository cloned successfully and install.sh removed"
 }
 
 install_python_dependencies() {
     echo "Installing Python dependencies..."
-    if [ -f /tmp/decoys/requirements.txt ]; then
+    if [ -f /tmp/decoys/honeypot/requirements.txt ]; then
         echo "Installing dependencies from requirements.txt..."
-        pip3 install -r /tmp/decoys/requirements.txt
+        pip3 install -r /tmp/decoys/honeypot/requirements.txt
     else
         echo "requirements.txt file not found. Skipping Python dependencies installation."
     fi
 }
 
-create_directories() {
-    echo "Creating directories..."
-    mkdir -p /opt/NETB /opt/NETW /opt/RDP /opt/SSH /opt/TUI /opt/VBEM /opt/VBR /opt/VHR /opt/VWR
-    mkdir -p /etc/hnp
-}
-
 copy_files() {
     echo "Copying files..."
-    cp /tmp/decoys/NETB/* /opt/NETB/
-    cp /tmp/decoys/NETW/* /opt/NETW/
-    cp /tmp/decoys/RDP/* /opt/RDP/
-    cp /tmp/decoys/SSH/* /opt/SSH/
-    cp /tmp/decoys/TUI/* /opt/TUI/
-    cp /tmp/decoys/VBEM/* /opt/VBEM/
-    cp /tmp/decoys/VBR/* /opt/VBR/
-    cp /tmp/decoys/VHR/* /opt/VHR/
-    cp /tmp/decoys/VWR/* /opt/VWR/
-    cp /tmp/decoys/etc/hnp/* /etc/hnp/
+    cp -r /tmp/decoys/honeypot /opt
+    if [[ ! -e /etc/hnp ]]; then
+        cp -r /tmp/decoys/etc/hnp /etc
+    fi
     cp /tmp/decoys/etc/rsyslog.d/* /etc/rsyslog.d/
     if [ -f /tmp/decoys/etc/sshd/sshd_config ]; then
         cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
@@ -118,22 +105,23 @@ copy_files() {
     else
         echo "Profile file not found in the repository. No changes made to /etc/profile."
     fi
-    cp /tmp/decoys/*.service /etc/systemd/system/
+    cp /tmp/decoys/etc/systemd/system/* /etc/systemd/system/
     cp /tmp/decoys/usr/local/bin/start_hnp_tui.sh /usr/local/bin/
 }
 
 set_permissions() {
     echo "Setting permissions..."
-    chmod +x /opt/NETB/netbios_honeypot.py
-    chmod +x /opt/NETW/network_config.py
-    chmod +x /opt/RDP/rdp_honeypot.py
-    chmod +x /opt/SSH/ssh_honeypot.py
-    chmod +x /opt/TUI/hnp_tui.py
-    chmod +x /opt/VBEM/vbem_server.py
-    chmod +x /opt/VBR/vbr_server.py
-    chmod +x /opt/VHR/vhr_honeypot.py
-    chmod +x /opt/VWR/vwr_honeypot.py
-    chmod +x /usr/local/bin/start_hnp_tui.sh
+    chmod +x \
+        /opt/honeypot/netbios_honeypot.py \
+        /opt/honeypot/tui/network_config.py \
+        /opt/honeypot/rdp_honeypot.py \
+        /opt/honeypot/ssh_honeypot.py \
+        /opt/honeypot/tui/hnp_tui.py \
+        /opt/honeypot/vbem_honeypot.py \
+        /opt/honeypot/vbr_honeypot.py \
+        /opt/honeypot/vhr_honeypot.py \
+        /opt/honeypot/vwr_honeypot.py \
+        /usr/local/bin/start_hnp_tui.sh
 }
 
 start_services() {
@@ -158,7 +146,6 @@ main() {
     install_basic_dependencies
     clone_repo
     install_python_dependencies
-    create_directories
     copy_files
     set_permissions
     start_services
